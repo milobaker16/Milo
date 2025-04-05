@@ -106,7 +106,7 @@
     <div id="leaderBoardList">No scores yet.</div>
   </div>
   <script>
-    // URL for your Google Apps Script web app (global leaderboard API)
+    // Use the provided Google Apps Script web app URL for the leaderboard API
     const leaderboardAPIUrl = "https://script.google.com/macros/s/AKfycbx3solb-5b99iYz7-KLO9tVVUxmtS11IsguwnQwB-mOsseAWgluz28iEDu_Ho-gU7Xh/exec";
 
     // Wait until the window loads so the DOM is ready.
@@ -133,10 +133,10 @@
       // Game state variables
       let dogPos, dogBody, direction, changeTo, foodPos, foodSpawn, score, level, nextLevel, gameOverFlag;
       
-      // Reset game state
+      // Reset game state and start the game loop.
       function resetGame() {
         dogPos = [100, 50];
-        // Dog body: index 0 = head, index 1 = front (with legs), index 2 = tail.
+        // Dog body: index 0 = head, index 1 = front (for legs), index 2 = tail.
         dogBody = [
           dogPos.slice(), 
           [dogPos[0] - blockSize, dogPos[1]], 
@@ -144,7 +144,7 @@
         ];
         direction = "RIGHT";
         changeTo = "RIGHT";
-        // For first 5 levels, ensure bone isn't on the perimeter.
+        // For first 5 levels, ensure the bone (food) doesn't spawn on the perimeter.
         if (level <= 5) {
           foodPos = [
             (Math.floor(Math.random() * ((WIDTH / blockSize) - 2)) + 1) * blockSize,
@@ -168,7 +168,7 @@
         gameInterval = setInterval(gameLoop, 1000 / FPS);
       }
       
-      // Update the leaderboard display by fetching data from your Apps Script web app.
+      // Update the leaderboard display by fetching data from the Google Apps Script web app.
       function updateLeaderBoard() {
         fetch(leaderboardAPIUrl)
           .then(response => response.json())
@@ -183,7 +183,7 @@
           .catch(error => console.error("Error fetching leaderboard:", error));
       }
       
-      // Submit the score by sending a POST request to your Apps Script web app.
+      // Submit the score to the Google Apps Script web app.
       function submitScore() {
         let name = playerNameInput.value.trim();
         if (name === "") {
@@ -198,7 +198,7 @@
         })
           .then(response => response.json())
           .then(data => {
-            updateLeaderBoard(); // refresh the leaderboard after submission
+            updateLeaderBoard(); // Refresh leaderboard after submitting score
             scoreInputContainer.style.display = "none";
             playerNameInput.value = "";
           })
@@ -277,7 +277,7 @@
         }
       }
       
-      // Draw the bone (food) as two circles connected by a line.
+      // Draw the bone (food) as two circles with a connecting line.
       function drawBone(pos) {
         const leftCenter = { x: pos[0] + blockSize / 3, y: pos[1] + blockSize / 2 };
         const rightCenter = { x: pos[0] + 2 * blockSize / 3, y: pos[1] + blockSize / 2 };
@@ -370,7 +370,6 @@
         drawStats();
       }
       
-      // Listen for key presses to control the dog.
       document.addEventListener("keydown", function(e) {
         if (!gameOverFlag) {
           if (e.key === "ArrowUp" && direction !== "DOWN") {
@@ -391,7 +390,7 @@
         restartButton.style.display = "none";
       });
       
-      // Optionally, update the leaderboard on page load.
+      // Optionally update the leaderboard on page load.
       updateLeaderBoard();
       
       // Start the game.
