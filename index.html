@@ -2,61 +2,127 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Leaderboard Test</title>
+  <title>Sausage Roll Game</title>
   <style>
+    /* Overall page styling (Apple-inspired) */
     body {
       background: #f5f5f7;
       color: #333;
       font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-      text-align: center;
       margin: 0;
       padding: 20px;
+      text-align: center;
     }
     h1 {
-      margin-bottom: 20px;
+      margin-top: 20px;
+      margin-bottom: 10px;
     }
-    input, button {
+    /* Canvas styling */
+    canvas {
+      background: #000;
+      display: block;
+      margin: 20px auto;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+    }
+    /* Restart button and score input container styling */
+    #restartButton {
+      display: none;
+      font-size: 18px;
+      padding: 10px 20px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 8px;
+      background: #007aff;
+      color: #fff;
+      cursor: pointer;
+    }
+    #restartButton:hover {
+      background: #0051c7;
+    }
+    #scoreInputContainer {
+      display: none;
+      margin-top: 20px;
+    }
+    #playerName, #playerScore {
       font-size: 16px;
       padding: 8px;
-      margin: 5px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-right: 5px;
+    }
+    #scoreInputContainer button {
+      font-size: 18px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: #007aff;
+      color: #fff;
+      cursor: pointer;
+    }
+    #scoreInputContainer button:hover {
+      background: #0051c7;
+    }
+    /* Leaderboard display (positioned on the right) */
+    #leaderBoard {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 250px;
+      background: #fff;
+      color: #333;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      text-align: left;
+    }
+    #leaderBoard h2 {
+      margin-top: 0;
+      font-size: 20px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 10px;
     }
     #leaderBoardList {
       font-size: 16px;
-      text-align: left;
-      display: inline-block;
-      margin-top: 20px;
+      margin: 0;
+      padding-left: 20px;
     }
   </style>
 </head>
 <body>
-  <h1>Leaderboard Test</h1>
-  <div>
+  <h1>Sausage Roll Game</h1>
+  <canvas id="gameCanvas" width="600" height="400"></canvas>
+  <br>
+  <button id="restartButton">Restart</button>
+  <div id="scoreInputContainer">
     <input type="text" id="playerName" placeholder="Enter your name (optional)">
-    <input type="number" id="playerScore" placeholder="Enter your score">
+    <!-- The score is taken from the game; you can also allow manual entry if desired -->
     <button id="submitScore">Submit Score</button>
-    <button id="testSubmitScore">Test Submit Score</button>
   </div>
-  <div id="leaderBoardList">Loading leaderboard...</div>
-  
+  <div id="leaderBoard">
+    <h2>Leaderboard</h2>
+    <div id="leaderBoardList">Loading leaderboard...</div>
+  </div>
+
   <script>
-    // Use your new Google Apps Script web app URL.
+    // Leaderboard API URL (Google Apps Script endpoint)
     const leaderboardAPIUrl = "https://script.google.com/macros/s/AKfycbzbIfra2dSpxCTWkVM_vWCmD0pWOp8xdQJV3q-LeKecq0Nby6SGJWT82Dm2tFkyyjLz/exec";
-    
+
+    /***********************
+     * Leaderboard Functions
+     ***********************/
     const playerNameInput = document.getElementById("playerName");
-    const playerScoreInput = document.getElementById("playerScore");
     const submitScoreButton = document.getElementById("submitScore");
-    const testSubmitScoreButton = document.getElementById("testSubmitScore");
     const leaderBoardList = document.getElementById("leaderBoardList");
-    
-    // Fetch and display the leaderboard using JSONP
+
+    // Use JSONP for GET requests to bypass CORS for GET.
     function updateLeaderBoard() {
       console.log("Fetching leaderboard from:", leaderboardAPIUrl);
-      // Append a callback parameter to get JSONP response.
       fetch(leaderboardAPIUrl + "?callback=handleLeaderboard")
         .then(response => response.text())
         .then(data => {
           console.log("Raw JSONP response:", data);
-          // Remove the callback wrapper; assume response format: handleLeaderboard([...]);
+          // Remove JSONP callback wrapper.
           let json = data.replace(/^handleLeaderboard\((.*)\);?$/, "$1");
           let leaderboard = JSON.parse(json);
           console.log("Parsed leaderboard data:", leaderboard);
@@ -73,61 +139,289 @@
         })
         .catch(error => console.error("Error fetching leaderboard:", error));
     }
-    
-    // Submit a score using user input values.
+
+    // Function to submit a score; uses mode "no-cors" for POST requests.
     function submitScore() {
       let name = playerNameInput.value.trim();
-      if (name === "") {
-        name = "Anonymous";
-      }
-      let scoreValue = playerScoreInput.value;
-      let score = scoreValue !== "" ? Number(scoreValue) : 100; // default to 100 if empty
-      console.log("Submitting score:", score, "for name:", name);
-      const payload = { name: name, score: score };
-      
+      if (name === "") { name = "Anonymous"; }
+      // The game should update the score variable; here we assume it exists.
+      // For testing purposes, you may set score to a fixed value.
+      let payload = { name: name, score: score };  // 'score' is a global variable from the game code
+      console.log("Submitting score:", payload);
       fetch(leaderboardAPIUrl, {
         method: "POST",
+        mode: "no-cors",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       })
-        .then(response => {
-          console.log("Submit response status:", response.status);
-          return response.json();
-        })
-        .then(data => {
-          console.log("Submit response data:", data);
-          updateLeaderBoard();
-          playerNameInput.value = "";
-          playerScoreInput.value = "";
-        })
-        .catch(error => console.error("Error submitting score:", error));
-    }
-    
-    // Test submission using a fixed payload (similar to your curl test).
-    function testSubmitScore() {
-      const payload = { name: "Test User", score: 123 };
-      console.log("Submitting test score:", payload);
-      
-      fetch(leaderboardAPIUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+      .then(() => {
+        console.log("POST request sent (opaque response).");
+        updateLeaderBoard();
+        // Hide score submission after sending.
+        document.getElementById("scoreInputContainer").style.display = "none";
+        playerNameInput.value = "";
       })
-        .then(response => {
-          console.log("Test submit response status:", response.status);
-          return response.json();
-        })
-        .then(data => {
-          console.log("Test submit response data:", data);
-          updateLeaderBoard();
-        })
-        .catch(error => console.error("Error submitting test score:", error));
+      .catch(error => console.error("Error submitting score:", error));
     }
-    
+
     submitScoreButton.addEventListener("click", submitScore);
-    testSubmitScoreButton.addEventListener("click", testSubmitScore);
+
+    /***********************
+     * Game Code
+     ***********************/
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const restartButton = document.getElementById("restartButton");
     
-    // Initial load of the leaderboard.
+    const WIDTH = canvas.width;
+    const HEIGHT = canvas.height;
+    
+    // Game settings
+    let blockSize = 15;
+    let FPS = 8;
+    let gameInterval;
+    
+    // Colors
+    const WHITE = "#FFFFFF", BLACK = "#000000", BROWN = "#8B4513", BLUE = "#0000FF";
+    
+    // Game state variables
+    let dogPos, dogBody, direction, changeTo, foodPos, foodSpawn, score, level, nextLevel, gameOverFlag;
+    
+    // Reset the game state and start the game loop.
+    function resetGame() {
+      dogPos = [100, 50];
+      dogBody = [
+        dogPos.slice(), 
+        [dogPos[0] - blockSize, dogPos[1]], 
+        [dogPos[0] - 2 * blockSize, dogPos[1]]
+      ];
+      direction = "RIGHT";
+      changeTo = "RIGHT";
+      // For first 5 levels, ensure the food doesn't spawn on the perimeter.
+      if (level <= 5) {
+        foodPos = [
+          (Math.floor(Math.random() * ((WIDTH / blockSize) - 2)) + 1) * blockSize,
+          (Math.floor(Math.random() * ((HEIGHT / blockSize) - 2)) + 1) * blockSize
+        ];
+      } else {
+        foodPos = [
+          Math.floor(Math.random() * (WIDTH / blockSize)) * blockSize,
+          Math.floor(Math.random() * (HEIGHT / blockSize)) * blockSize
+        ];
+      }
+      foodSpawn = true;
+      score = 0;
+      level = 1;
+      nextLevel = 50;
+      FPS = 8;
+      gameOverFlag = false;
+      restartButton.style.display = "none";
+      document.getElementById("scoreInputContainer").style.display = "none";
+      clearInterval(gameInterval);
+      gameInterval = setInterval(gameLoop, 1000 / FPS);
+    }
+    
+    // Draw score and level on the canvas.
+    function drawStats() {
+      ctx.fillStyle = WHITE;
+      ctx.font = "20px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText("Score: " + score + "   Level: " + level, 10, 20);
+    }
+    
+    // Draw a dog segment based on its type.
+    function drawDogSegment(pos, segmentType) {
+      if (segmentType === "head") {
+        let centerX = pos[0] + blockSize / 2;
+        let centerY = pos[1] + blockSize / 2;
+        ctx.fillStyle = BROWN;
+        ctx.beginPath();
+        ctx.ellipse(centerX, centerY, blockSize / 2, (blockSize / 2) * 0.8, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.shadowColor = "rgba(0,0,0,0.5)";
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+        const eyeRadius = blockSize / 6;
+        ctx.fillStyle = BLUE;
+        ctx.beginPath();
+        ctx.arc(pos[0] + blockSize * 0.35, pos[1] + blockSize * 0.4, eyeRadius, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.fillStyle = WHITE;
+        ctx.beginPath();
+        ctx.arc(pos[0] + blockSize * 0.65, pos[1] + blockSize * 0.4, eyeRadius, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.fillStyle = BLACK;
+        ctx.beginPath();
+        ctx.arc(pos[0] + blockSize * 0.9, pos[1] + blockSize / 2, blockSize / 8, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.fillStyle = BROWN;
+        ctx.beginPath();
+        ctx.moveTo(pos[0] + blockSize * 0.2, pos[1] + blockSize * 0.4);
+        ctx.lineTo(pos[0] + blockSize * 0.3, pos[1] - blockSize * 0.3);
+        ctx.lineTo(pos[0] + blockSize * 0.4, pos[1] + blockSize * 0.4);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(pos[0] + blockSize * 0.8, pos[1] + blockSize * 0.4);
+        ctx.lineTo(pos[0] + blockSize * 0.7, pos[1] - blockSize * 0.3);
+        ctx.lineTo(pos[0] + blockSize * 0.6, pos[1] + blockSize * 0.4);
+        ctx.fill();
+        ctx.shadowColor = "transparent";
+        return;
+      } else {
+        ctx.fillStyle = BROWN;
+        ctx.fillRect(pos[0], pos[1], blockSize, blockSize);
+      }
+      if (segmentType === "front" || segmentType === "tail") {
+        const footRadius = blockSize / 4;
+        const leftFoot = { x: pos[0] + footRadius, y: pos[1] + blockSize - footRadius };
+        const rightFoot = { x: pos[0] + blockSize - footRadius, y: pos[1] + blockSize - footRadius };
+        ctx.fillStyle = BLACK;
+        ctx.beginPath();
+        ctx.arc(leftFoot.x, leftFoot.y, footRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(rightFoot.x, rightFoot.y, footRadius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    
+    // Draw the bone (food) as two circles connected by a line.
+    function drawBone(pos) {
+      const leftCenter = { x: pos[0] + blockSize / 3, y: pos[1] + blockSize / 2 };
+      const rightCenter = { x: pos[0] + 2 * blockSize / 3, y: pos[1] + blockSize / 2 };
+      const radius = blockSize / 4;
+      ctx.fillStyle = WHITE;
+      ctx.beginPath();
+      ctx.arc(leftCenter.x, leftCenter.y, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(rightCenter.x, rightCenter.y, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = WHITE;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(leftCenter.x, leftCenter.y);
+      ctx.lineTo(rightCenter.x, rightCenter.y);
+      ctx.stroke();
+    }
+    
+    // End the game, display "Game Over" and show the score submission container.
+    function endGame() {
+      clearInterval(gameInterval);
+      gameOverFlag = true;
+      ctx.fillStyle = WHITE;
+      ctx.font = "50px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("Game Over", WIDTH / 2, HEIGHT / 2 - 40);
+      restartButton.style.display = "inline-block";
+      document.getElementById("scoreInputContainer").style.display = "block";
+      // When the game ends, use the current game score for leaderboard submission.
+      // (This 'score' variable is used in the submitScore() function.)
+    }
+    
+    // Main game loop.
+    function gameLoop() {
+      ctx.clearRect(0, 0, WIDTH, HEIGHT);
+      direction = changeTo;
+      if (direction === "UP") {
+        dogPos[1] -= blockSize;
+      } else if (direction === "DOWN") {
+        dogPos[1] += blockSize;
+      } else if (direction === "LEFT") {
+        dogPos[0] -= blockSize;
+      } else if (direction === "RIGHT") {
+        dogPos[0] += blockSize;
+      }
+      dogBody.unshift(dogPos.slice());
+      if (Math.abs(dogPos[0] - foodPos[0]) < blockSize && Math.abs(dogPos[1] - foodPos[1]) < blockSize) {
+        score += 10;
+        foodSpawn = false;
+        if (score >= nextLevel) {
+          level++;
+          nextLevel += 50;
+          FPS++; // Increase speed slightly each level
+          clearInterval(gameInterval);
+          gameInterval = setInterval(gameLoop, 1000 / FPS);
+        }
+      } else {
+        dogBody.pop();
+      }
+      if (!foodSpawn) {
+        if (level <= 5) {
+          foodPos = [
+            (Math.floor(Math.random() * ((WIDTH / blockSize) - 2)) + 1) * blockSize,
+            (Math.floor(Math.random() * ((HEIGHT / blockSize) - 2)) + 1) * blockSize
+          ];
+        } else {
+          foodPos = [
+            Math.floor(Math.random() * (WIDTH / blockSize)) * blockSize,
+            Math.floor(Math.random() * (HEIGHT / blockSize)) * blockSize
+          ];
+        }
+        foodSpawn = true;
+      }
+      for (let i = 0; i < dogBody.length; i++) {
+        let segType = "body";
+        if (i === 0) segType = "head";
+        else if (i === 1) segType = "front";
+        else if (i === dogBody.length - 1) segType = "tail";
+        drawDogSegment(dogBody[i], segType);
+      }
+      drawBone(foodPos);
+      if (dogPos[0] < 0 || dogPos[0] >= WIDTH || dogPos[1] < 0 || dogPos[1] >= HEIGHT) {
+        endGame();
+      }
+      for (let i = 1; i < dogBody.length; i++) {
+        if (dogPos[0] === dogBody[i][0] && dogPos[1] === dogBody[i][1]) {
+          endGame();
+        }
+      }
+      drawStats();
+    }
+    
+    // Listen for arrow key presses to control the dog.
+    document.addEventListener("keydown", function(e) {
+      if (!gameOverFlag) {
+        if (e.key === "ArrowUp" && direction !== "DOWN") {
+          changeTo = "UP";
+        } else if (e.key === "ArrowDown" && direction !== "UP") {
+          changeTo = "DOWN";
+        } else if (e.key === "ArrowLeft" && direction !== "RIGHT") {
+          changeTo = "LEFT";
+        } else if (e.key === "ArrowRight" && direction !== "LEFT") {
+          changeTo = "RIGHT";
+        }
+      }
+    });
+    
+    restartButton.addEventListener("click", function() {
+      resetGame();
+      gameOverFlag = false;
+      restartButton.style.display = "none";
+    });
+    
+    // Initialize game state and start the game.
+    function startGame() {
+      // Initialize global game variables:
+      dogPos = [100, 50];
+      dogBody = [
+        dogPos.slice(),
+        [dogPos[0] - blockSize, dogPos[1]],
+        [dogPos[0] - 2 * blockSize, dogPos[1]]
+      ];
+      direction = "RIGHT";
+      changeTo = "RIGHT";
+      foodSpawn = true;
+      score = 0;
+      level = 1;
+      nextLevel = 50;
+      FPS = 8;
+      gameOverFlag = false;
+      resetGame();
+    }
+    
+    startGame();
     updateLeaderBoard();
   </script>
 </body>
