@@ -2,394 +2,62 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Sausage Roll</title>
-  <style>
-    /* Overall page styling with a clean, crisp aesthetic */
-    body {
-      background: #f5f5f7;
-      color: #333;
-      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      text-align: center;
-    }
-    h1 {
-      margin-top: 20px;
-    }
-    /* Canvas styled with a dark border and rounded corners */
-    canvas {
-      background: #000;
-      display: block;
-      margin: 20px auto;
-      border: 2px solid #ccc;
-      border-radius: 10px;
-    }
-    /* Restart button styled for a modern, minimal look */
-    #restartButton {
-      display: none;
-      font-size: 18px;
-      padding: 10px 20px;
-      margin-top: 20px;
-      border: none;
-      border-radius: 8px;
-      background: #007aff;
-      color: #fff;
-      cursor: pointer;
-    }
-    #restartButton:hover {
-      background: #0051c7;
-    }
-    /* Score input container is hidden by default */
-    #scoreInputContainer {
-      display: none;
-      margin-top: 20px;
-    }
-    /* Input and submit button inside the score input container */
-    #playerName {
-      font-size: 16px;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      margin-right: 10px;
-    }
-    #scoreInputContainer button {
-      font-size: 18px;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      background: #007aff;
-      color: #fff;
-      cursor: pointer;
-    }
-    #scoreInputContainer button:hover {
-      background: #0051c7;
-    }
-    /* Leaderboard positioned fixed in the upper right corner */
-    #leaderBoard {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      width: 250px;
-      background: #fff;
-      color: #333;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      text-align: left;
-    }
-    #leaderBoard h2 {
-      margin-top: 0;
-      font-size: 20px;
-      border-bottom: 1px solid #ccc;
-      padding-bottom: 10px;
-    }
-    #leaderBoardList {
-      font-size: 16px;
-    }
-    #leaderBoardList ol {
-      padding-left: 20px;
-      margin: 0;
-    }
-  </style>
+  <title>Leaderboard Test</title>
 </head>
 <body>
-  <h1>Sausage Roll</h1>
-  <canvas id="gameCanvas" width="600" height="400"></canvas>
-  <br>
-  <button id="restartButton">Restart</button>
-  <div id="scoreInputContainer">
-    <input type="text" id="playerName" placeholder="Enter your name (optional)">
-    <button id="submitScore">Submit Score</button>
-  </div>
-  <div id="leaderBoard">
-    <h2>Leaderboard</h2>
-    <div id="leaderBoardList">No scores yet.</div>
-  </div>
+  <h1>Leaderboard Test</h1>
+  <input type="text" id="playerName" placeholder="Enter your name (optional)">
+  <button id="submitScore">Submit Score</button>
+  <div id="leaderBoardList">Loading...</div>
   <script>
-    // Use your new Google Apps Script web app URL for the leaderboard API
     const leaderboardAPIUrl = "https://script.google.com/macros/s/AKfycbxjnZfGNDhavSzTTGMQHmTQ_AdPmMhmNLcRv7ew4jJE33Uc42Ouvq4zX-JElXlK5Sfb/exec";
+    const playerNameInput = document.getElementById("playerName");
+    const submitScoreButton = document.getElementById("submitScore");
+    const leaderBoardList = document.getElementById("leaderBoardList");
 
-    window.onload = function() {
-      const canvas = document.getElementById("gameCanvas");
-      const ctx = canvas.getContext("2d");
-      const restartButton = document.getElementById("restartButton");
-      const scoreInputContainer = document.getElementById("scoreInputContainer");
-      const playerNameInput = document.getElementById("playerName");
-      const submitScoreButton = document.getElementById("submitScore");
-      const leaderBoardList = document.getElementById("leaderBoardList");
-
-      const WIDTH = canvas.width;
-      const HEIGHT = canvas.height;
-      
-      // Game settings
-      let blockSize = 15;
-      let FPS = 8;
-      let gameInterval;
-      
-      // Colors
-      const WHITE = "#FFFFFF", BLACK = "#000000", BROWN = "#8B4513", BLUE = "#0000FF";
-      
-      // Game state variables
-      let dogPos, dogBody, direction, changeTo, foodPos, foodSpawn, score, level, nextLevel, gameOverFlag;
-      
-      function resetGame() {
-        dogPos = [100, 50];
-        dogBody = [
-          dogPos.slice(), 
-          [dogPos[0] - blockSize, dogPos[1]], 
-          [dogPos[0] - 2 * blockSize, dogPos[1]]
-        ];
-        direction = "RIGHT";
-        changeTo = "RIGHT";
-        if (level <= 5) {
-          foodPos = [
-            (Math.floor(Math.random() * ((WIDTH / blockSize) - 2)) + 1) * blockSize,
-            (Math.floor(Math.random() * ((HEIGHT / blockSize) - 2)) + 1) * blockSize
-          ];
-        } else {
-          foodPos = [
-            Math.floor(Math.random() * (WIDTH / blockSize)) * blockSize,
-            Math.floor(Math.random() * (HEIGHT / blockSize)) * blockSize
-          ];
-        }
-        foodSpawn = true;
-        score = 0;
-        level = 1;
-        nextLevel = 50;
-        FPS = 8;
-        gameOverFlag = false;
-        restartButton.style.display = "none";
-        scoreInputContainer.style.display = "none";
-        clearInterval(gameInterval);
-        gameInterval = setInterval(gameLoop, 1000 / FPS);
-      }
-      
-      function updateLeaderBoard() {
-        fetch(leaderboardAPIUrl)
-          .then(response => response.json())
-          .then(data => {
-            let html = "<ol>";
+    function updateLeaderBoard() {
+      console.log("Fetching leaderboard...");
+      fetch(leaderboardAPIUrl)
+        .then(response => response.json())
+        .then(data => {
+          console.log("Leaderboard data:", data);
+          let html = "<ol>";
+          if (data.length === 0) {
+            html += "<li>No scores yet.</li>";
+          } else {
             data.forEach(entry => {
               html += `<li><strong>${entry.name}</strong>: ${entry.score}</li>`;
             });
-            html += "</ol>";
-            leaderBoardList.innerHTML = html;
-          })
-          .catch(error => console.error("Error fetching leaderboard:", error));
-      }
-      
-      function submitScore() {
-        let name = playerNameInput.value.trim();
-        if (name === "") {
-          name = "Anonymous";
-        }
-        console.log("Submitting score:", score, "for name:", name);
-        const payload = { name: name, score: score };
-        
-        fetch(leaderboardAPIUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          }
+          html += "</ol>";
+          leaderBoardList.innerHTML = html;
         })
-          .then(response => {
-            console.log("Response status:", response.status);
-            return response.json();
-          })
-          .then(data => {
-            console.log("Submit response:", data);
-            updateLeaderBoard();
-            scoreInputContainer.style.display = "none";
-            playerNameInput.value = "";
-          })
-          .catch(error => console.error("Error submitting score:", error));
+        .catch(error => console.error("Error fetching leaderboard:", error));
+    }
+
+    function submitScore() {
+      let name = playerNameInput.value.trim();
+      if (name === "") {
+        name = "Anonymous";
       }
-      
-      submitScoreButton.addEventListener("click", submitScore);
-      playerNameInput.addEventListener("keydown", function(e) {
-        if (e.key === "Enter") {
-          submitScore();
-        }
-      });
-      
-      function drawStats() {
-        ctx.fillStyle = WHITE;
-        ctx.font = "20px sans-serif";
-        ctx.textAlign = "left";
-        ctx.fillText("Score: " + score + "   Level: " + level, 10, 20);
-      }
-      
-      function drawDogSegment(pos, segmentType) {
-        if (segmentType === "head") {
-          let centerX = pos[0] + blockSize / 2;
-          let centerY = pos[1] + blockSize / 2;
-          ctx.fillStyle = BROWN;
-          ctx.beginPath();
-          ctx.ellipse(centerX, centerY, blockSize / 2, (blockSize / 2) * 0.8, 0, 0, 2 * Math.PI);
-          ctx.fill();
-          ctx.shadowColor = "rgba(0,0,0,0.5)";
-          ctx.shadowBlur = 4;
-          ctx.shadowOffsetX = 2;
-          ctx.shadowOffsetY = 2;
-          const eyeRadius = blockSize / 6;
-          ctx.fillStyle = BLUE;
-          ctx.beginPath();
-          ctx.arc(pos[0] + blockSize * 0.35, pos[1] + blockSize * 0.4, eyeRadius, 0, 2 * Math.PI);
-          ctx.fill();
-          ctx.fillStyle = WHITE;
-          ctx.beginPath();
-          ctx.arc(pos[0] + blockSize * 0.65, pos[1] + blockSize * 0.4, eyeRadius, 0, 2 * Math.PI);
-          ctx.fill();
-          ctx.fillStyle = BLACK;
-          ctx.beginPath();
-          ctx.arc(pos[0] + blockSize * 0.9, pos[1] + blockSize / 2, blockSize / 8, 0, 2 * Math.PI);
-          ctx.fill();
-          ctx.fillStyle = BROWN;
-          ctx.beginPath();
-          ctx.moveTo(pos[0] + blockSize * 0.2, pos[1] + blockSize * 0.4);
-          ctx.lineTo(pos[0] + blockSize * 0.3, pos[1] - blockSize * 0.3);
-          ctx.lineTo(pos[0] + blockSize * 0.4, pos[1] + blockSize * 0.4);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.moveTo(pos[0] + blockSize * 0.8, pos[1] + blockSize * 0.4);
-          ctx.lineTo(pos[0] + blockSize * 0.7, pos[1] - blockSize * 0.3);
-          ctx.lineTo(pos[0] + blockSize * 0.6, pos[1] + blockSize * 0.4);
-          ctx.fill();
-          ctx.shadowColor = "transparent";
-          return;
-        } else {
-          ctx.fillStyle = BROWN;
-          ctx.fillRect(pos[0], pos[1], blockSize, blockSize);
-        }
-        if (segmentType === "front" || segmentType === "tail") {
-          const footRadius = blockSize / 4;
-          const leftFoot = { x: pos[0] + footRadius, y: pos[1] + blockSize - footRadius };
-          const rightFoot = { x: pos[0] + blockSize - footRadius, y: pos[1] + blockSize - footRadius };
-          ctx.fillStyle = BLACK;
-          ctx.beginPath();
-          ctx.arc(leftFoot.x, leftFoot.y, footRadius, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.arc(rightFoot.x, rightFoot.y, footRadius, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-      
-      function drawBone(pos) {
-        const leftCenter = { x: pos[0] + blockSize / 3, y: pos[1] + blockSize / 2 };
-        const rightCenter = { x: pos[0] + 2 * blockSize / 3, y: pos[1] + blockSize / 2 };
-        const radius = blockSize / 4;
-        ctx.fillStyle = WHITE;
-        ctx.beginPath();
-        ctx.arc(leftCenter.x, leftCenter.y, radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(rightCenter.x, rightCenter.y, radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = WHITE;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(leftCenter.x, leftCenter.y);
-        ctx.lineTo(rightCenter.x, rightCenter.y);
-        ctx.stroke();
-      }
-      
-      function endGame() {
-        clearInterval(gameInterval);
-        gameOverFlag = true;
-        ctx.fillStyle = WHITE;
-        ctx.font = "50px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("Game Over", WIDTH / 2, HEIGHT / 2 - 40);
-        restartButton.style.display = "inline-block";
-        scoreInputContainer.style.display = "block";
-        playerNameInput.focus();
-      }
-      
-      function gameLoop() {
-        ctx.clearRect(0, 0, WIDTH, HEIGHT);
-        direction = changeTo;
-        if (direction === "UP") {
-          dogPos[1] -= blockSize;
-        } else if (direction === "DOWN") {
-          dogPos[1] += blockSize;
-        } else if (direction === "LEFT") {
-          dogPos[0] -= blockSize;
-        } else if (direction === "RIGHT") {
-          dogPos[0] += blockSize;
-        }
-        dogBody.unshift(dogPos.slice());
-        if (Math.abs(dogPos[0] - foodPos[0]) < blockSize && Math.abs(dogPos[1] - foodPos[1]) < blockSize) {
-          score += 10;
-          foodSpawn = false;
-          if (score >= nextLevel) {
-            level++;
-            nextLevel += 50;
-            FPS++; 
-            clearInterval(gameInterval);
-            gameInterval = setInterval(gameLoop, 1000 / FPS);
-          }
-        } else {
-          dogBody.pop();
-        }
-        if (!foodSpawn) {
-          if (level <= 5) {
-            foodPos = [
-              (Math.floor(Math.random() * ((WIDTH / blockSize) - 2)) + 1) * blockSize,
-              (Math.floor(Math.random() * ((HEIGHT / blockSize) - 2)) + 1) * blockSize
-            ];
-          } else {
-            foodPos = [
-              Math.floor(Math.random() * (WIDTH / blockSize)) * blockSize,
-              Math.floor(Math.random() * (HEIGHT / blockSize)) * blockSize
-            ];
-          }
-          foodSpawn = true;
-        }
-        for (let i = 0; i < dogBody.length; i++) {
-          let segType = "body";
-          if (i === 0) segType = "head";
-          else if (i === 1) segType = "front";
-          else if (i === dogBody.length - 1) segType = "tail";
-          drawDogSegment(dogBody[i], segType);
-        }
-        drawBone(foodPos);
-        if (dogPos[0] < 0 || dogPos[0] >= WIDTH || dogPos[1] < 0 || dogPos[1] >= HEIGHT) {
-          endGame();
-        }
-        for (let i = 1; i < dogBody.length; i++) {
-          if (dogPos[0] === dogBody[i][0] && dogPos[1] === dogBody[i][1]) {
-            endGame();
-          }
-        }
-        drawStats();
-      }
-      
-      document.addEventListener("keydown", function(e) {
-        if (!gameOverFlag) {
-          if (e.key === "ArrowUp" && direction !== "DOWN") {
-            changeTo = "UP";
-          } else if (e.key === "ArrowDown" && direction !== "UP") {
-            changeTo = "DOWN";
-          } else if (e.key === "ArrowLeft" && direction !== "RIGHT") {
-            changeTo = "LEFT";
-          } else if (e.key === "ArrowRight" && direction !== "LEFT") {
-            changeTo = "RIGHT";
-          }
-        }
-      });
-      
-      restartButton.addEventListener("click", function() {
-        resetGame();
-        gameOverFlag = false;
-        restartButton.style.display = "none";
-      });
-      
-      // Update leaderboard on page load.
-      updateLeaderBoard();
-      
-      // Start the game.
-      resetGame();
-    };
+      const payload = { name: name, score: 100 }; // Fixed score for testing
+      console.log("Submitting score...", payload);
+      fetch(leaderboardAPIUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log("Submit response:", data);
+        updateLeaderBoard();
+      })
+      .catch(error => console.error("Error submitting score:", error));
+    }
+
+    submitScoreButton.addEventListener("click", submitScore);
+    // Load leaderboard on page load
+    updateLeaderBoard();
   </script>
 </body>
 </html>
