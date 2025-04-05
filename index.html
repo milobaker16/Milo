@@ -106,10 +106,9 @@
     <div id="leaderBoardList">No scores yet.</div>
   </div>
   <script>
-    // Use the provided Google Apps Script web app URL for the leaderboard API
-    const leaderboardAPIUrl = "https://script.google.com/macros/s/AKfycbx3solb-5b99iYz7-KLO9tVVUxmtS11IsguwnQwB-mOsseAWgluz28iEDu_Ho-gU7Xh/exec";
+    // Use your new Google Apps Script web app URL for the leaderboard API
+    const leaderboardAPIUrl = "https://script.google.com/macros/s/AKfycbxjnZfGNDhavSzTTGMQHmTQ_AdPmMhmNLcRv7ew4jJE33Uc42Ouvq4zX-JElXlK5Sfb/exec";
 
-    // Wait until the window loads so the DOM is ready.
     window.onload = function() {
       const canvas = document.getElementById("gameCanvas");
       const ctx = canvas.getContext("2d");
@@ -124,7 +123,7 @@
       
       // Game settings
       let blockSize = 15;
-      let FPS = 8; // Increased initial speed
+      let FPS = 8;
       let gameInterval;
       
       // Colors
@@ -133,10 +132,8 @@
       // Game state variables
       let dogPos, dogBody, direction, changeTo, foodPos, foodSpawn, score, level, nextLevel, gameOverFlag;
       
-      // Reset game state and start the game loop.
       function resetGame() {
         dogPos = [100, 50];
-        // Dog body: index 0 = head, index 1 = front (for legs), index 2 = tail.
         dogBody = [
           dogPos.slice(), 
           [dogPos[0] - blockSize, dogPos[1]], 
@@ -144,7 +141,6 @@
         ];
         direction = "RIGHT";
         changeTo = "RIGHT";
-        // For first 5 levels, ensure the bone (food) doesn't spawn on the perimeter.
         if (level <= 5) {
           foodPos = [
             (Math.floor(Math.random() * ((WIDTH / blockSize) - 2)) + 1) * blockSize,
@@ -168,7 +164,6 @@
         gameInterval = setInterval(gameLoop, 1000 / FPS);
       }
       
-      // Update the leaderboard display by fetching data from the Google Apps Script web app.
       function updateLeaderBoard() {
         fetch(leaderboardAPIUrl)
           .then(response => response.json())
@@ -183,12 +178,12 @@
           .catch(error => console.error("Error fetching leaderboard:", error));
       }
       
-      // Submit the score to the Google Apps Script web app.
       function submitScore() {
         let name = playerNameInput.value.trim();
         if (name === "") {
           name = "Anonymous";
         }
+        console.log("Submitting score:", score, "for name:", name);
         const payload = { name: name, score: score };
         
         fetch(leaderboardAPIUrl, {
@@ -196,9 +191,13 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         })
-          .then(response => response.json())
+          .then(response => {
+            console.log("Response status:", response.status);
+            return response.json();
+          })
           .then(data => {
-            updateLeaderBoard(); // Refresh leaderboard after submitting score
+            console.log("Submit response:", data);
+            updateLeaderBoard();
             scoreInputContainer.style.display = "none";
             playerNameInput.value = "";
           })
@@ -212,7 +211,6 @@
         }
       });
       
-      // Draw score and level on the canvas.
       function drawStats() {
         ctx.fillStyle = WHITE;
         ctx.font = "20px sans-serif";
@@ -220,7 +218,6 @@
         ctx.fillText("Score: " + score + "   Level: " + level, 10, 20);
       }
       
-      // Draw a dog segment based on its type.
       function drawDogSegment(pos, segmentType) {
         if (segmentType === "head") {
           let centerX = pos[0] + blockSize / 2;
@@ -277,7 +274,6 @@
         }
       }
       
-      // Draw the bone (food) as two circles with a connecting line.
       function drawBone(pos) {
         const leftCenter = { x: pos[0] + blockSize / 3, y: pos[1] + blockSize / 2 };
         const rightCenter = { x: pos[0] + 2 * blockSize / 3, y: pos[1] + blockSize / 2 };
@@ -297,7 +293,6 @@
         ctx.stroke();
       }
       
-      // End the game, show "Game Over", and display the score submission area.
       function endGame() {
         clearInterval(gameInterval);
         gameOverFlag = true;
@@ -310,7 +305,6 @@
         playerNameInput.focus();
       }
       
-      // Main game loop.
       function gameLoop() {
         ctx.clearRect(0, 0, WIDTH, HEIGHT);
         direction = changeTo;
@@ -330,7 +324,7 @@
           if (score >= nextLevel) {
             level++;
             nextLevel += 50;
-            FPS++; // Increase speed slightly each level
+            FPS++; 
             clearInterval(gameInterval);
             gameInterval = setInterval(gameLoop, 1000 / FPS);
           }
@@ -390,7 +384,7 @@
         restartButton.style.display = "none";
       });
       
-      // Optionally update the leaderboard on page load.
+      // Update leaderboard on page load.
       updateLeaderBoard();
       
       // Start the game.
