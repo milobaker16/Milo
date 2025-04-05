@@ -3,29 +3,68 @@
 <head>
   <meta charset="UTF-8">
   <title>Leaderboard Test</title>
+  <style>
+    body {
+      background: #f5f5f7;
+      color: #333;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    input, button {
+      font-size: 16px;
+      padding: 8px;
+      margin: 5px;
+    }
+    #leaderBoardList {
+      font-size: 16px;
+      text-align: left;
+      display: inline-block;
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
   <h1>Leaderboard Test</h1>
-  <input type="text" id="playerName" placeholder="Enter your name (optional)">
-  <button id="submitScore">Submit Score</button>
-  <div id="leaderBoardList">Loading...</div>
+  <div>
+    <input type="text" id="playerName" placeholder="Enter your name (optional)">
+    <input type="number" id="playerScore" placeholder="Enter your score">
+    <button id="submitScore">Submit Score</button>
+    <button id="testSubmitScore">Test Submit Score</button>
+  </div>
+  <div id="leaderBoardList">Loading leaderboard...</div>
+  
   <script>
-    const leaderboardAPIUrl = "https://script.google.com/macros/s/AKfycbxjnZfGNDhavSzTTGMQHmTQ_AdPmMhmNLcRv7ew4jJE33Uc42Ouvq4zX-JElXlK5Sfb/exec";
+    // Use your new Google Apps Script web app URL.
+    const leaderboardAPIUrl = "https://script.google.com/macros/s/AKfycbzbIfra2dSpxCTWkVM_vWCmD0pWOp8xdQJV3q-LeKecq0Nby6SGJWT82Dm2tFkyyjLz/exec";
+    
     const playerNameInput = document.getElementById("playerName");
+    const playerScoreInput = document.getElementById("playerScore");
     const submitScoreButton = document.getElementById("submitScore");
+    const testSubmitScoreButton = document.getElementById("testSubmitScore");
     const leaderBoardList = document.getElementById("leaderBoardList");
-
+    
+    // Fetch and display the leaderboard using JSONP
     function updateLeaderBoard() {
-      console.log("Fetching leaderboard...");
-      fetch(leaderboardAPIUrl)
-        .then(response => response.json())
+      console.log("Fetching leaderboard from:", leaderboardAPIUrl);
+      // Append a callback parameter to get JSONP response.
+      fetch(leaderboardAPIUrl + "?callback=handleLeaderboard")
+        .then(response => response.text())
         .then(data => {
-          console.log("Leaderboard data:", data);
+          console.log("Raw JSONP response:", data);
+          // Remove the callback wrapper; assume response format: handleLeaderboard([...]);
+          let json = data.replace(/^handleLeaderboard\((.*)\);?$/, "$1");
+          let leaderboard = JSON.parse(json);
+          console.log("Parsed leaderboard data:", leaderboard);
           let html = "<ol>";
-          if (data.length === 0) {
+          if (leaderboard.length === 0) {
             html += "<li>No scores yet.</li>";
           } else {
-            data.forEach(entry => {
+            leaderboard.forEach(entry => {
               html += `<li><strong>${entry.name}</strong>: ${entry.score}</li>`;
             });
           }
@@ -34,29 +73,61 @@
         })
         .catch(error => console.error("Error fetching leaderboard:", error));
     }
-
+    
+    // Submit a score using user input values.
     function submitScore() {
       let name = playerNameInput.value.trim();
       if (name === "") {
         name = "Anonymous";
       }
-      const payload = { name: name, score: 100 }; // Fixed score for testing
-      console.log("Submitting score...", payload);
+      let scoreValue = playerScoreInput.value;
+      let score = scoreValue !== "" ? Number(scoreValue) : 100; // default to 100 if empty
+      console.log("Submitting score:", score, "for name:", name);
+      const payload = { name: name, score: score };
+      
       fetch(leaderboardAPIUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       })
-      .then(response => response.json())
-      .then(data => {
-        console.log("Submit response:", data);
-        updateLeaderBoard();
-      })
-      .catch(error => console.error("Error submitting score:", error));
+        .then(response => {
+          console.log("Submit response status:", response.status);
+          return response.json();
+        })
+        .then(data => {
+          console.log("Submit response data:", data);
+          updateLeaderBoard();
+          playerNameInput.value = "";
+          playerScoreInput.value = "";
+        })
+        .catch(error => console.error("Error submitting score:", error));
     }
-
+    
+    // Test submission using a fixed payload (similar to your curl test).
+    function testSubmitScore() {
+      const payload = { name: "Test User", score: 123 };
+      console.log("Submitting test score:", payload);
+      
+      fetch(leaderboardAPIUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+        .then(response => {
+          console.log("Test submit response status:", response.status);
+          return response.json();
+        })
+        .then(data => {
+          console.log("Test submit response data:", data);
+          updateLeaderBoard();
+        })
+        .catch(error => console.error("Error submitting test score:", error));
+    }
+    
     submitScoreButton.addEventListener("click", submitScore);
-    // Load leaderboard on page load
+    testSubmitScoreButton.addEventListener("click", testSubmitScore);
+    
+    // Initial load of the leaderboard.
     updateLeaderBoard();
   </script>
 </body>
